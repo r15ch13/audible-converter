@@ -1,0 +1,32 @@
+{
+  "name": "audible-converter",
+  "version": "1.0.0",
+  "description": "Converts Audible aax audiobooks to m4a while keeping chapters and the cover image intact. The cover can be added as a looped image so it is shown while playing on Plex Media Server",
+  "main": "index.js",
+  "bin": {
+    "audible-converter": "./bin/audible-converter"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "aax",
+    "m4a",
+    "m4v",
+    "audible"
+  ],
+  "author": "Richard Kuhnt <r15ch13+git@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.4.1",
+    "colors": "^1.1.2",
+    "commander": "^2.9.0",
+    "fluent-ffmpeg": "^2.1.0",
+    "glob": "^7.0.5",
+    "lodash": "^4.13.1",
+    "progress": "^1.1.8",
+    "regedit": "^2.2.6",
+    "sanitize-filename": "^1.6.0",
+    "winston": "^2.2.0"
+  }
+}
