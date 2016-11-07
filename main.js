@@ -5,6 +5,7 @@ const _ = require('lodash')
 const colors = require('colors')
 const ffmpeg = require('fluent-ffmpeg')
 const glob = require('glob')
+const os = require('os')
 const path = require('path')
 const program = require('commander')
 const sanitize = require('sanitize-filename')
@@ -12,10 +13,15 @@ const winston = require('winston')
 
 const Promise = require('bluebird')
 const ffprobe = Promise.promisify(ffmpeg.ffprobe)
-const regeditList = Promise.promisify(require('regedit').list)
+const pkg = require('./package.json')
 
 const AudibleDevicesKey = 'HKLM\\SOFTWARE\\WOW6432Node\\Audible\\SWGIDMAP'
-const pkg = require('./package.json')
+let regeditList = null
+if (os.platform() === 'win32') {
+  try {
+    regeditList = Promise.promisify(require('regedit').list)
+  } catch (e) {}
+}
 
 const colorTheme = {
   error: 'red',
@@ -42,7 +48,8 @@ let extractBytes = (byteArray) => {
   }).join('')
 }
 
-let fetchDeviceActivationBytes = () => {
+let fetchActivationBytesFromDevices = () => {
+  if (typeof regeditList !== 'function') throw new Error('Regedit dependency failed!')
   return regeditList(AudibleDevicesKey).then((result) => {
     let entries = _.map(result[AudibleDevicesKey].values, (n) => {
       return extractBytes(n.value)
@@ -55,6 +62,22 @@ let fetchDeviceActivationBytes = () => {
     if (entries.length > 0) return entries
     throw new Error('Could not find any Audible Activation Bytes!')
   })
+}
+
+let fetchActivationBytes = () => {
+  if (os.platform() !== 'win32') return Promise.resolve(program.activationBytes)
+
+  return fetchActivationBytesFromDevices()
+    .then((devices) => {
+      let bytes = devices[0] ? devices[0] : ''
+      bytes = program.activationBytes ? program.activationBytes : bytes
+      bytes = devices[program.device] ? devices[program.device] : bytes
+
+      if (program.device && !devices[program.device]) {
+        throw new Error(`Device Nr. ${program.device} not found! Please use the 'list' command to get your devices.`)
+      }
+      return bytes
+    })
 }
 
 let fetchMetadata = (input) => {
@@ -188,16 +211,12 @@ let converter = (inputFile) => {
       return metadata
     })
     .then(() => {
-      return fetchDeviceActivationBytes()
+      return fetchActivationBytes()
     })
-    .then((devices) => {
-      let bytes = devices[0] ? devices[0] : ''
-      bytes = program.activationBytes ? program.activationBytes : bytes
-      bytes = devices[program.device] ? devices[program.device] : bytes
-
-      if (program.device && !devices[program.device]) {
-        throw new Error(`Device Nr. ${program.device} not found! Please use the 'list' command to get your devices.`)
-      }
+    .catch((err) => {
+      throw err
+    })
+    .then((bytes) => {
       if (!bytes) {
         throw new Error('Please provide activation bytes with -a <bytes> or select a device using -d <number>')
       }
@@ -210,8 +229,7 @@ let converter = (inputFile) => {
       if (program.loop) return addLoopedImage(outputFile, loopedFile, coverImage, duration)
     })
     .catch((err) => {
-      winston.error(err.message)
-      winston.debug(err)
+      throw err
     })
 }
 
@@ -254,27 +272,29 @@ program
   .option('-p, --path <path>', 'output path')
   .option('-v, --verbose', 'output detailed information', increaseVerbosity, 0)
   .option('-a, --activation-bytes <value>', '4 byte activation secret to decrypt Audible AAX files (e.g. 1CEB00DA)', /^[A-Fa-f0-9]{8}$/i, false)
-  .option('-d, --device <number>', 'registered device number from which activation bytes are used')
   .option('-l, --loop', 'add looped cover image to Audiobook')
-  .action(main)
 
-program
-  .command('list')
-  .description('list registered devices and their activation bytes (windows only)')
-  .action(() => {
-    fetchDeviceActivationBytes()
-      .then((result) => {
-        console.log('Activation bytes of registered devices:\n')
-        _.each(result, (v, k) => {
-          console.log(`Device ${k}: ${v}`)
+if (os.platform() === 'win32') {
+  program.option('-d, --device <number>', 'registered device number from which activation bytes are used')
+  program
+    .command('list')
+    .description('list registered devices and their activation bytes (windows only)')
+    .action(() => {
+      fetchActivationBytesFromDevices()
+        .then((result) => {
+          console.log('Activation bytes of registered devices:\n')
+          _.each(result, (v, k) => {
+            console.log(`Device ${k}: ${v}`)
+          })
         })
-      })
-      .catch((err) => {
-        winston.error(err.message)
-        winston.debug(err)
-      })
-  })
+        .catch((err) => {
+          winston.error(err.message)
+          winston.debug(err)
+        })
+    })
+}
 
+program.action(main)
 program.parse(process.argv)
 
 if (!process.argv.slice(2).length) {
