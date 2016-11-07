@@ -49,7 +49,9 @@ let extractBytes = (byteArray) => {
 }
 
 let fetchActivationBytesFromDevices = () => {
-  if (typeof regeditList !== 'function') throw new Error('Regedit dependency failed!')
+  if (typeof regeditList !== 'function') {
+    return Promise.reject(new Error(`Optional dependency \`regedit\` is not installed. Try reinstalling ${pkg.name} without ignoring \`optionalDependencies\`.`))
+  }
   return regeditList(AudibleDevicesKey).then((result) => {
     let entries = _.map(result[AudibleDevicesKey].values, (n) => {
       return extractBytes(n.value)
@@ -65,11 +67,16 @@ let fetchActivationBytesFromDevices = () => {
 }
 
 let fetchActivationBytes = () => {
-  if (os.platform() !== 'win32') return Promise.resolve(program.activationBytes)
+  if (os.platform() !== 'win32') {
+    return Promise.resolve(program.activationBytes)
+  }
 
   return fetchActivationBytesFromDevices()
+    .catch((err) => {
+      throw err
+    })
     .then((devices) => {
-      let bytes = devices[0] ? devices[0] : ''
+      let bytes = _.first(devices) || ''
       bytes = program.activationBytes ? program.activationBytes : bytes
       bytes = devices[program.device] ? devices[program.device] : bytes
 
@@ -218,7 +225,7 @@ let converter = (inputFile) => {
     })
     .then((bytes) => {
       if (!bytes) {
-        throw new Error('Please provide activation bytes with -a <bytes> or select a device using -d <number>')
+        throw new Error('Please provide activation bytes with -a <bytes>' + (os.platform() === 'win32' ? ' or select a device using -d <number>' : ''))
       }
       return convertAudiobook(inputFile, outputFile, bytes, duration)
     })
@@ -278,7 +285,7 @@ if (os.platform() === 'win32') {
   program.option('-d, --device <number>', 'registered device number from which activation bytes are used')
   program
     .command('list')
-    .description('list registered devices and their activation bytes (windows only)')
+    .description('list registered devices and their activation bytes')
     .action(() => {
       fetchActivationBytesFromDevices()
         .then((result) => {

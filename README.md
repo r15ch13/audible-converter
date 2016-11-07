@@ -21,14 +21,14 @@ The cover can be added as a looped image so it will be shown while playing on [P
     -p, --path <path>               output path
     -v, --verbose                   output detailed information
     -a, --activation-bytes <value>  4 byte activation secret to decrypt Audible AAX files (e.g. 1CEB00DA)
-    -d, --device <number>           registered device number from which activation bytes are used
+    -d, --device <number>           registered device number from which activation bytes are used (windows only)
     -l, --loop                      add looped cover image to Audiobook
 ```
 
 ## Example:
 
 ```
-> audible-converter *.aax -a 1CEB00DA
+λ audible-converter *.aax -a 1CEB00DA
 
 Haruki Murakami - 1Q84 (Buch 1 & 2) [2012] (Duration: 30h53m0s)
 Converting Audiobook (using 1CEB00DA for decryption) ... 100%
