@@ -51,6 +51,7 @@ Finished converting 4 Audiobooks!
 
 # Requirements
 * [x] Installed Audible Download Manager (for getting your activation bytes)
+  * On OSX or Linux you could use this method http://apple.stackexchange.com/a/243670
 * [x] [ffmpeg](https://ffmpeg.org/) for converting
 
 # How it works
