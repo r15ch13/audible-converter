@@ -60,7 +60,7 @@ Finished converting 4 Audiobooks!
 * Decrypted and convert to m4a:
   * `ffmpeg -y -activation_bytes 1CEB00DA -i audiobook.aax -c:a copy -vn audiobook.m4a`
 * Add looped cover image:
-  * `ffmpeg -y -r 1 -loop 1 -i cover.png -i audioboob.m4a -c:a copy -shortest audiobook.m4v`
+  * `ffmpeg -y -r 1 -loop 1 -i cover.png -i audiobook.m4a -c:a copy -shortest audiobook.m4v`
 
 # License
 [The MIT License (MIT)](http://r15ch13.mit-license.org/)
