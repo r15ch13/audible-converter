@@ -1,6 +1,6 @@
 {
   "name": "audible-converter",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Converts Audible AAX audiobooks to M4A while keeping chapters and the cover image intact.",
   "author": "Richard Kuhnt <r15ch13+git@gmail.com>",
   "license": "MIT",
@@ -11,7 +11,7 @@
     "audible"
   ],
   "repository": "r15ch13/audible-converter",
-  "main": "index.js",
+  "main": "main.js",
   "bin": {
     "audible-converter": "./bin/audible-converter"
   },
@@ -19,17 +19,17 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "bluebird": "^3.4.1",
+    "bluebird": "^3.5.0",
     "colors": "^1.1.2",
-    "commander": "^2.9.0",
-    "fluent-ffmpeg": "^2.1.0",
-    "glob": "^7.0.5",
-    "lodash": "^4.13.1",
-    "progress": "^1.1.8",
-    "sanitize-filename": "^1.6.0",
-    "winston": "^2.2.0"
+    "commander": "^2.11.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "glob": "^7.1.2",
+    "lodash": "^4.17.4",
+    "progress": "^2.0.0",
+    "sanitize-filename": "^1.6.1",
+    "winston": "^2.3.1"
   },
   "optionalDependencies": {
-    "regedit": "^2.2.6"
+    "regedit": "^2.2.7"
   }
 }
