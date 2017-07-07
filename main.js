@@ -116,6 +116,11 @@ let fetchMetadata = (input) => {
       checksum: bytesToHex(checksum).toLowerCase()
     }
   })
+  .then((metadata) => {
+    console.log(`${metadata.artist} - ${metadata.title} [${metadata.date}] (Duration: ${metadata.duration})`)
+    if (metadata.filetype !== 'aax') throw new Error('Not a valid AAX File!')
+    return metadata
+  })
 }
 
 let fetchChecksum = (file) => {
@@ -220,8 +225,6 @@ let converter = (inputFile) => {
 
   return fetchMetadata(inputFile)
     .then((metadata) => {
-      console.log(`${metadata.artist} - ${metadata.title} [${metadata.date}] (Duration: ${metadata.duration})`)
-      if (metadata.filetype !== 'aax') throw new Error('Not a valid AAX File!')
       duration = metadata.durationRaw
 
       let outputDirectory = path.dirname(inputFile)
