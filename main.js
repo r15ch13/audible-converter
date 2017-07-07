@@ -216,21 +216,18 @@ let addLoopedImage = (input, output, image, duration) => {
   })
 }
 
-let execPromise = (cmd, argv) => {
-  winston.silly(cmd, argv)
+let rcrack = (checksum) => {
   return new Promise((resolve, reject) => {
-    let child = spawn(cmd, argv, { cwd: './' })
+    let child = spawn('rcrack', ['tables', '-h', checksum], { cwd: './rcrack' })
     child.stdout.on('data', resolve)
     child.stderr.on('data', reject)
   })
 }
 
 let lookupChecksum = (checksum) => {
-  let rcrack = path.resolve('./rcrack/rcrack')
-  let rainbowtables = path.resolve('./rcrack/tables')
   console.log(`Looking up activation bytes for checksum: ${checksum}`)
   console.log(`This might take a moment ...`)
-  return execPromise(rcrack, [rainbowtables, '-h', checksum])
+  return rcrack(checksum)
     .then((output) => {
       winston.log('info', output.toString())
       let matches = output.toString().match(/hex:([a-fA-F0-9]{8})/)
