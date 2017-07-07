@@ -1,0 +1,1 @@
+This folder contains a stripped down version of [RainbowCrack 1.7](http://project-rainbowcrack.com/) and the Plugin for Audible files created by [inAudible-NG](https://github.com/inAudible-NG/tables).
