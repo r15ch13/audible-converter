@@ -23,18 +23,24 @@ if (os.platform() === 'win32') {
   } catch (e) {}
 }
 
-const colorTheme = {
+colors.setTheme({
   error: 'red',
   warn: 'yellow',
   info: 'green',
   verbose: 'cyan',
   debug: 'blue',
   silly: 'magenta'
-}
-colors.setTheme(colorTheme)
+})
 
 let increaseVerbosity = (v, total) => {
   return total + 1
+}
+
+let setupWinston = () => {
+  winston.level = _.findKey(winston.config.npm.levels, (o) => {
+    return o === program.verbose
+  })
+  winston.level = winston.level || 'error'
 }
 
 let toHex = (d) => {
@@ -123,7 +129,7 @@ let extractCoverImage = (input, output) => {
         winston.debug(cmd)
       })
       .on('progress', (msg) => {
-        winston.log('silly', msg)
+        winston.silly(msg)
       })
       .run()
   })
@@ -181,7 +187,7 @@ let addLoopedImage = (input, output, image, duration) => {
 }
 
 let converter = (inputFile) => {
-  winston.log('silly', inputFile)
+  winston.silly(inputFile)
 
   let coverImage = null
   let outputFile = null
@@ -202,19 +208,19 @@ let converter = (inputFile) => {
         name: outputFilename,
         ext: '.png'
       })
-      winston.log('silly', coverImage)
+      winston.silly(coverImage)
       outputFile = path.format({
         dir: outputDirectory,
         name: outputFilename,
         ext: '.m4a'
       })
-      winston.log('silly', outputFile)
+      winston.silly(outputFile)
       loopedFile = path.format({
         dir: outputDirectory,
         name: outputFilename,
         ext: '.m4v'
       })
-      winston.log('silly', loopedFile)
+      winston.silly(loopedFile)
       return metadata
     })
     .then(() => {
@@ -249,11 +255,7 @@ let globPromise = (pattern, options) => {
 }
 
 let main = function (inputFile) {
-  winston.level = _.findKey(winston.config.npm.levels, (o) => {
-    return o === program.verbose
-  })
-  winston.level = winston.level || 'error'
-
+  setupWinston()
   globPromise(inputFile, {})
     .then((files) => {
       return Promise.reduce(files, (total, file) => {
@@ -287,6 +289,7 @@ if (os.platform() === 'win32') {
     .command('list')
     .description('list registered devices and their activation bytes')
     .action(() => {
+      setupWinston()
       fetchActivationBytesFromDevices()
         .then((result) => {
           console.log('Activation bytes of registered devices:\n')
