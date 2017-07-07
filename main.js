@@ -219,6 +219,7 @@ let addLoopedImage = (input, output, image, duration) => {
 let rcrack = (checksum) => {
   return new Promise((resolve, reject) => {
     let child = spawn('rcrack', ['tables', '-h', checksum], { cwd: './rcrack' })
+    child.addListener('error', reject)
     child.stdout.on('data', resolve)
     child.stderr.on('data', reject)
   })
