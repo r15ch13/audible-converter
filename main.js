@@ -335,6 +335,21 @@ if (os.platform() === 'win32') {
           winston.debug(err)
         })
     })
+  program
+    .command('checksum')
+    .description('show audiobooks checksum')
+    .arguments('<file>')
+    .action((inputFile) => {
+      setupWinston()
+      fetchMetadata(inputFile)
+        .then((metadata) => {
+          console.log(`Checksum for ${inputFile} is ${metadata.checksum}`)
+        })
+        .catch((err) => {
+          winston.error(err.message)
+          winston.debug(err)
+        })
+    })
 }
 
 program.action(main)
