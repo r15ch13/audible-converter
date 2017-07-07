@@ -224,8 +224,14 @@ let converter = (inputFile) => {
       if (metadata.filetype !== 'aax') throw new Error('Not a valid AAX File!')
       duration = metadata.durationRaw
 
-      let outputDirectory = program.path ? path.resolve(program.path) : path.dirname(inputFile)
-      let outputFilename = program.output ? sanitize(path.basename(program.output, path.extname(program.output))) : sanitize(`${metadata.artist} - ${metadata.title} [${metadata.date}]`)
+      let outputDirectory = path.dirname(inputFile)
+      if (program.path) {
+        outputDirectory = path.resolve(program.path)
+      }
+      let outputFilename = sanitize(`${metadata.artist} - ${metadata.title} [${metadata.date}]`)
+      if (program.output) {
+        outputFilename = sanitize(path.basename(program.output, path.extname(program.output)))
+      }
 
       coverImage = path.format({
         dir: outputDirectory,
