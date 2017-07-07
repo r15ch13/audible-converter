@@ -49,7 +49,11 @@ let toHex = (d) => {
 }
 
 let extractBytes = (byteArray) => {
-  return _.map(byteArray.slice(0, 4).reverse(), (n) => {
+  return bytesToHex(byteArray.slice(0, 4).reverse())
+}
+
+let bytesToHex = (byteArray) => {
+  return _.map(byteArray, (n) => {
     return toHex(n)
   }).join('')
 }
