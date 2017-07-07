@@ -6,6 +6,7 @@ const colors = require('colors')
 const ffmpeg = require('fluent-ffmpeg')
 const glob = require('glob')
 const os = require('os')
+const fs = require('fs')
 const path = require('path')
 const program = require('commander')
 const sanitize = require('sanitize-filename')
@@ -13,6 +14,8 @@ const winston = require('winston')
 
 const Promise = require('bluebird')
 const ffprobe = Promise.promisify(ffmpeg.ffprobe)
+const open = Promise.promisify(fs.open)
+const read = Promise.promisify(fs.read, {multiArgs: true})
 const pkg = require('./package.json')
 
 const AudibleDevicesKey = 'HKLM\\SOFTWARE\\WOW6432Node\\Audible\\SWGIDMAP'
@@ -98,17 +101,34 @@ let fetchActivationBytes = () => {
 }
 
 let fetchMetadata = (input) => {
-  return ffprobe(input)
-    .then((result) => {
-      return {
-        filetype: result.format.tags.major_brand ? result.format.tags.major_brand.trim().toLowerCase() : '',
-        artist: result.format.tags.artist ? result.format.tags.artist.trim() : '',
-        title: result.format.tags.title ? result.format.tags.title.trim() : '',
-        date: result.format.tags.date ? result.format.tags.date.trim() : '',
-        duration: `${Math.floor(result.format.duration / 3600)}h${Math.floor(result.format.duration % 3600 / 60)}m${Math.floor(result.format.duration % 3600 % 60)}s`,
-        durationRaw: Math.floor(result.format.duration)
-      }
-    })
+  return Promise.all([
+    ffprobe(input),
+    fetchChecksum(input)
+  ])
+  .spread((result, checksum) => {
+    return {
+      filetype: result.format.tags.major_brand ? result.format.tags.major_brand.trim().toLowerCase() : '',
+      artist: result.format.tags.artist ? result.format.tags.artist.trim() : '',
+      title: result.format.tags.title ? result.format.tags.title.trim() : '',
+      date: result.format.tags.date ? result.format.tags.date.trim() : '',
+      duration: `${Math.floor(result.format.duration / 3600)}h${Math.floor(result.format.duration % 3600 / 60)}m${Math.floor(result.format.duration % 3600 % 60)}s`,
+      durationRaw: Math.floor(result.format.duration),
+      checksum: bytesToHex(checksum).toLowerCase()
+    }
+  })
+}
+
+let fetchChecksum = (file) => {
+  let buffer = Buffer.alloc(20)
+  return open(file, 'r')
+  .then((fd) => {
+    return read(fd, buffer, 0, buffer.length, 653) // start at absolute postion 0x28d
+  })
+  .catch((err) => {
+    winston.error(err.message)
+    winston.debug(err)
+  })
+  .return(buffer)
 }
 
 let currentTimemarkToPercent = (timemark, total) => {
