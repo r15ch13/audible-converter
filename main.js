@@ -7,6 +7,7 @@ const ffmpeg = require('fluent-ffmpeg')
 const glob = require('glob')
 const os = require('os')
 const fs = require('fs')
+const request = require('request')
 const path = require('path')
 const program = require('commander')
 const sanitize = require('sanitize-filename')
@@ -17,6 +18,7 @@ const Promise = require('bluebird')
 const ffprobe = Promise.promisify(ffmpeg.ffprobe)
 const open = Promise.promisify(fs.open)
 const read = Promise.promisify(fs.read, {multiArgs: true})
+const readFile = Promise.promisify(fs.readFile)
 const pkg = require('./package.json')
 
 const AudibleDevicesKey = 'HKLM\\SOFTWARE\\WOW6432Node\\Audible\\SWGIDMAP'
@@ -162,6 +164,49 @@ let extractCoverImage = (input, output) => {
         winston.silly(msg)
       })
       .run()
+  })
+}
+
+let extractDownloadURL = (adhFile) => {
+  return new Promise((resolve, reject) => {
+    readFile(adhFile)
+      .then((content) => {
+        content = content.toString()
+        let custId = content.match(/cust_id=([\w-]+[^&])/).pop()
+        let productId = content.match(/product_id=([\w-]+[^&])/).pop()
+        let codec = content.match(/codec=([\w-]+[^&])/).pop()
+        let title = content.match(/title=([\w\s-]+[^&])/).pop()
+        resolve({url: `https://cds.audible.de/download?product_id=${productId}&cust_id=${custId}&codec=${codec}`, title: title})
+      })
+      .catch((err) => {
+        reject(err)
+      })
+  })
+}
+
+let download = (url, output, encoding) => {
+  return new Promise((resolve, reject) => {
+    let receivedBytes = 0
+    let totalBytes = 0
+    let outStream = fs.createWriteStream(output)
+
+    request.get(url)
+      .on('response', function (data) {
+        totalBytes = parseInt(data.headers['content-length'])
+      })
+      .on('data', function (chunk) {
+        receivedBytes += chunk.length
+        process.stdout.write(`Downloading '${output}' | ${((receivedBytes * 100) / totalBytes).toFixed(2)}% | ${(receivedBytes / 1048576).toFixed(2)} / ${(totalBytes / 1048576).toFixed(2)} MB` + '\r')
+      })
+      .on('error', function (err) {
+        console.log('') // fix stdout
+        reject(err)
+      })
+      .on('end', function () {
+        console.log('') // fix stdout
+        resolve()
+      })
+      .pipe(outStream)
   })
 }
 
@@ -403,6 +448,25 @@ program
         winston.error(err.message)
         winston.debug(err)
       })
+  })
+
+program
+  .command('download')
+  .description('download an audiobook from *.adh')
+  .arguments('<file>')
+  .action((inputFile) => {
+    setupWinston()
+    extractDownloadURL(inputFile)
+    .then((result) => {
+      return download(result.url, `${sanitize(result.title)}.aax`)
+    })
+    .then(() => {
+      console.log('Download complete!')
+    })
+    .catch((err) => {
+      winston.error(err.message)
+      winston.debug(err)
+    })
   })
 
 program.action(main)
