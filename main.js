@@ -21,6 +21,8 @@ const read = Promise.promisify(fs.read, {multiArgs: true})
 const readFile = Promise.promisify(fs.readFile)
 const pkg = require('./package.json')
 
+process.env.RCRACK_PATH = process.env.RCRACK_PATH || path.resolve(`./tools/rcrack/${os.platform()}/rcrack`)
+
 const AudibleDevicesKey = 'HKLM\\SOFTWARE\\WOW6432Node\\Audible\\SWGIDMAP'
 let regeditList = null
 if (os.platform() === 'win32') {
@@ -47,6 +49,7 @@ let setupWinston = () => {
     return o === program.verbose
   })
   winston.level = winston.level || 'error'
+  winston.debug(`RCRACK_PATH: ${process.env.RCRACK_PATH}`)
 }
 
 let toHex = (d) => {
@@ -263,7 +266,7 @@ let addLoopedImage = (input, output, image, duration) => {
 
 let rcrack = (checksum) => {
   return new Promise((resolve, reject) => {
-    let child = spawn('./rcrack', ['tables', '-h', checksum], { cwd: './rcrack' })
+    let child = spawn(process.env.RCRACK_PATH, ['tables', '-h', checksum], { cwd: path.resolve(process.env.RCRACK_PATH, '../..') })
     child.addListener('error', reject)
     child.stdout.on('data', resolve)
     child.stderr.on('data', reject)
