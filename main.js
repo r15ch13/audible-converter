@@ -19,9 +19,9 @@ const ffprobe = Promise.promisify(ffmpeg.ffprobe)
 const open = Promise.promisify(fs.open)
 const read = Promise.promisify(fs.read, {multiArgs: true})
 const readFile = Promise.promisify(fs.readFile)
-const pkg = require('./package.json')
+const pkg = require(path.join(__dirname, './package.json'))
 
-process.env.RCRACK_PATH = process.env.RCRACK_PATH || path.resolve(`./tools/rcrack/${os.platform()}/rcrack`)
+process.env.RCRACK_PATH = process.env.RCRACK_PATH || path.resolve(path.join(__dirname, `./tools/rcrack/${os.platform()}/rcrack`))
 
 const AudibleDevicesKey = 'HKLM\\SOFTWARE\\WOW6432Node\\Audible\\SWGIDMAP'
 let regeditList = null
@@ -86,7 +86,7 @@ let fetchActivationBytesFromDevices = () => {
 }
 
 let fetchActivationBytes = () => {
-  if (os.platform() !== 'win32') {
+  if (os.platform() !== 'win32' || program.activationBytes) {
     return Promise.resolve(program.activationBytes)
   }
 
