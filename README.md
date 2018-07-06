@@ -55,7 +55,7 @@ Finished converting 4 Audiobooks!
 # Requirements
 * [x] Installed Audible Download Manager (for getting your activation bytes)
   * On OSX or Linux you could use this method http://apple.stackexchange.com/a/243670
-* [x] [ffmpeg](https://ffmpeg.org/) for converting
+* [x] [ffmpeg](https://ffmpeg.org/) for converting. **The executables need to be in the same folder as the module!**
 
 # How it works
 * Extract cover image:
