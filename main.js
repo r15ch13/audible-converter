@@ -179,7 +179,7 @@ let extractDownloadURL = (adhFile) => {
         let custId = content.match(/cust_id=([\w-]+[^&])/).pop()
         let productId = content.match(/product_id=([\w-]+[^&])/).pop()
         let codec = content.match(/codec=([\w-]+[^&])/).pop()
-        let title = content.match(/title=([\w\s-]+[^&])/).pop()
+        let title = content.match(/title=([^&]+)/).pop()
         resolve({url: `https://cds.audible.de/download?product_id=${productId}&cust_id=${custId}&codec=${codec}`, title: title})
       })
       .catch((err) => {
