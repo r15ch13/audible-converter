@@ -2,12 +2,10 @@
 'use strict'
 
 const _ = require('lodash')
-const colors = require('colors')
 const ffmpeg = require('fluent-ffmpeg')
 const glob = require('glob')
 const os = require('os')
 const fs = require('fs')
-const request = require('request')
 const https = require('https')
 const path = require('path')
 const program = require('commander')
@@ -32,26 +30,46 @@ if (os.platform() === 'win32') {
   } catch (e) {}
 }
 
-colors.setTheme({
+winston.addColors({
   error: 'red',
   warn: 'yellow',
   info: 'green',
   verbose: 'cyan',
   debug: 'blue',
   silly: 'magenta'
-})
+});
 
 let increaseVerbosity = (v, total) => {
   return total + 1
 }
 
+const logger = winston.createLogger({
+  level: {
+    error: 0,
+    warn: 1,
+    info: 2,
+    verbose: 3,
+    debug: 4,
+    silly: 5
+  },
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    })
+  ]
+});
+
 let setupWinston = () => {
-  winston.level = _.findKey(winston.config.npm.levels, (o) => {
+  logger.level = _.findKey(logger.levels, (o) => {
     return o === program.verbose
   })
-  winston.level = winston.level || 'error'
-  winston.debug(`RCRACK_PATH: ${process.env.RCRACK_PATH}`)
+  logger.level = logger.level || 'error'
+  logger.log('debug', `RCRACK_PATH: ${process.env.RCRACK_PATH}`)
 }
+
 
 let toHex = (d) => {
   // http://stackoverflow.com/a/13240395/2710739
@@ -137,8 +155,8 @@ let fetchChecksum = (file) => {
     return read(fd, buffer, 0, buffer.length, 653) // start at absolute postion 0x28d
   })
   .catch((err) => {
-    winston.error(err.message)
-    winston.debug(err)
+    logger.log('error', err.message)
+    logger.log('debug', err.stack)
   })
   .return(buffer)
 }
@@ -162,10 +180,10 @@ let extractCoverImage = (input, output) => {
       })
       .on('start', (cmd) => {
         process.stdout.write('Extracting Cover Image ... ')
-        winston.debug(cmd)
+        logger.log('debug', cmd)
       })
       .on('progress', (msg) => {
-        winston.silly(msg)
+        logger.log('silly', msg)
       })
       .run()
   })
@@ -236,7 +254,7 @@ let convertAudiobook = (input, output, activationBytes, duration) => {
         reject(err)
       })
       .on('start', (cmd) => {
-        winston.debug(cmd)
+        logger.log('debug', cmd)
       })
       .on('progress', (msg) => {
         process.stdout.write(`Converting Audiobook (using ${activationBytes} for decryption) ... ${currentTimemarkToPercent(msg.timemark, duration)}%` + '\r')
@@ -262,7 +280,7 @@ let addLoopedImage = (input, output, image, duration) => {
         reject(err)
       })
       .on('start', (cmd) => {
-        winston.debug(cmd)
+        logger.log('debug', cmd)
       })
       .on('progress', (msg) => {
         process.stdout.write(`Adding looped cover image to Audiobook ... ${currentTimemarkToPercent(msg.timemark, duration)}%` + '\r')
@@ -285,7 +303,7 @@ let lookupChecksum = (checksum) => {
   console.log(`This might take a moment ...`)
   return rcrack(checksum)
     .then((output) => {
-      winston.log('info', output.toString())
+      logger.log('info', output.toString())
       let matches = output.toString().match(/hex:([a-fA-F0-9]{8})/)
       if (!matches) throw new Error('Activation Bytes where not found!')
       console.log('Activation Bytes found:', matches[1])
@@ -293,7 +311,7 @@ let lookupChecksum = (checksum) => {
 }
 
 let converter = (inputFile) => {
-  winston.silly(inputFile)
+  logger.log('silly', inputFile)
 
   let coverImage = null
   let outputFile = null
@@ -318,19 +336,19 @@ let converter = (inputFile) => {
         name: outputFilename,
         ext: '.png'
       })
-      winston.silly(coverImage)
+      logger.log('silly', coverImage)
       outputFile = path.format({
         dir: outputDirectory,
         name: outputFilename,
         ext: '.m4a'
       })
-      winston.silly(outputFile)
+      logger.log('silly', outputFile)
       loopedFile = path.format({
         dir: outputDirectory,
         name: outputFilename,
         ext: '.m4v'
       })
-      winston.silly(loopedFile)
+      logger.log('silly', loopedFile)
       return metadata
     })
     .then(() => {
@@ -379,8 +397,8 @@ let main = function (inputFile) {
       console.log(`Finished converting ${total > 1 ? total : 'one'} Audiobook${total > 1 ? 's' : ''}!`)
     })
     .catch((err) => {
-      winston.error(err.message)
-      winston.debug(err)
+      logger.log('error', err.message)
+      logger.log('debug', err.stack)
     })
 }
 
@@ -413,8 +431,8 @@ program
         })
       })
       .catch((err) => {
-        winston.error(err.message)
-        winston.debug(err)
+        logger.log('error', err.message)
+        logger.log('debug', err.stack)
       })
   })
 program
@@ -430,8 +448,8 @@ program
     if (fileOrChecksum.match(/([a-fA-F0-9]{20})/)) {
       lookupChecksum(fileOrChecksum)
         .catch((err) => {
-          winston.error(err.message)
-          winston.debug(err)
+          logger.log('error', err.message)
+          logger.log('debug', err.stack)
         })
     } else {
       fetchMetadata(fileOrChecksum)
@@ -439,8 +457,8 @@ program
           return lookupChecksum(metadata.checksum)
         })
         .catch((err) => {
-          winston.error(err.message)
-          winston.debug(err)
+          logger.log('error', err.message)
+          logger.log('debug', err.stack)
         })
     }
   })
@@ -455,8 +473,8 @@ program
         console.log(`Checksum for ${inputFile} is ${metadata.checksum}`)
       })
       .catch((err) => {
-        winston.error(err.message)
-        winston.debug(err)
+        logger.log('error', err.message)
+        logger.log('debug', err.stack)
       })
   })
 
@@ -474,8 +492,8 @@ program
       console.log('Download complete!')
     })
     .catch((err) => {
-      winston.error(err.message)
-      winston.debug(err)
+      logger.log('error', err.message)
+      logger.log('debug', err.stack)
     })
   })
 
