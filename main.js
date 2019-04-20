@@ -8,6 +8,7 @@ const glob = require('glob')
 const os = require('os')
 const fs = require('fs')
 const request = require('request')
+const https = require('https')
 const path = require('path')
 const program = require('commander')
 const sanitize = require('sanitize-filename')
@@ -187,29 +188,35 @@ let extractDownloadURL = (adhFile) => {
   })
 }
 
-let download = (url, output, encoding) => {
+let download = (url, output) => {
   return new Promise((resolve, reject) => {
-    let receivedBytes = 0
-    let totalBytes = 0
-    let outStream = fs.createWriteStream(output)
+    https.get(url, (response) => {
+      const statusCode = response.statusCode
 
-    request.get(url)
-      .on('response', function (data) {
-        totalBytes = parseInt(data.headers['content-length'])
-      })
-      .on('data', function (chunk) {
+      if (statusCode !== 200) {
+        return reject(new Error('Download error!'))
+      }
+
+      let receivedBytes = 0
+      let totalBytes = response.headers['content-length']
+
+      response.on('data', function (chunk) {
         receivedBytes += chunk.length
-        process.stdout.write(`Downloading '${output}' | ${((receivedBytes * 100) / totalBytes).toFixed(2)}% | ${(receivedBytes / 1048576).toFixed(2)} / ${(totalBytes / 1048576).toFixed(2)} MB` + '\r')
+        process.stdout.write(`Downloading '${output}' ... ${((receivedBytes * 100) / totalBytes).toFixed(0)}% | ${(receivedBytes / 1048576).toFixed(2)} / ${(totalBytes / 1048576).toFixed(2)} MB` + '\r')
       })
-      .on('error', function (err) {
+
+      const writeStream = fs.createWriteStream(output)
+      response.pipe(writeStream)
+
+      writeStream.on('error', (err) => {
         console.log('') // fix stdout
         reject(err)
       })
-      .on('end', function () {
+      writeStream.on('finish', () => {
         console.log('') // fix stdout
-        resolve()
+        writeStream.close(resolve)
       })
-      .pipe(outStream)
+    })
   })
 }
 
