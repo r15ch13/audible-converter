@@ -28,7 +28,7 @@
     "lodash": "^4.17.4",
     "sanitize-filename": "^1.6.1",
     "winston": "^3.2.1",
-    "snyk": "^1.189.0"
+    "snyk": "^1.193.0"
   },
   "optionalDependencies": {
     "regedit": "^3.0.0"
