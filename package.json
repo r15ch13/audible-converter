@@ -16,7 +16,9 @@
     "audible-converter": "./bin/audible-converter"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "dependencies": {
     "bluebird": "^3.5.5",
@@ -25,9 +27,11 @@
     "glob": "^7.1.4",
     "lodash": "^4.17.14",
     "sanitize-filename": "^1.6.1",
-    "winston": "^3.2.1"
+    "winston": "^3.2.1",
+    "snyk": "^1.319.1"
   },
   "optionalDependencies": {
     "regedit": "^3.0.2"
-  }
+  },
+  "snyk": true
 }
