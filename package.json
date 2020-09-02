@@ -23,7 +23,7 @@
     "commander": "^2.20.0",
     "fluent-ffmpeg": "^2.1.2",
     "glob": "^7.1.4",
-    "lodash": "^4.17.14",
+    "lodash": "^4.17.17",
     "sanitize-filename": "^1.6.1",
     "winston": "^3.2.1"
   },
