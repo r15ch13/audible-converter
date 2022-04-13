@@ -25,7 +25,7 @@
     "glob": "^7.1.4",
     "lodash": "^4.17.14",
     "sanitize-filename": "^1.6.1",
-    "winston": "^3.2.1"
+    "winston": "^3.3.0"
   },
   "optionalDependencies": {
     "regedit": "^3.0.2"
