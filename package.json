@@ -22,7 +22,7 @@
     "bluebird": "^3.5.5",
     "commander": "^2.20.0",
     "fluent-ffmpeg": "^2.1.2",
-    "glob": "^7.1.4",
+    "glob": "^9.0.0",
     "lodash": "^4.17.14",
     "sanitize-filename": "^1.6.1",
     "winston": "^3.3.0"
